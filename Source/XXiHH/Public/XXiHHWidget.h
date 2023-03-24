@@ -82,6 +82,10 @@ public:
 	ECheckBoxState GetIsCleanLevel() const { return bCleanLevel; }
 	void SetIsCleanLevel(ECheckBoxState NewState) { bCleanLevel = NewState; }
 
+	TSharedRef<SWidget> InitMinDistanceInput();
+	float OnGetMinDistance() const;
+	void OnMinDistanceChanged(float NewMinDistance);
+
 	TSharedRef<SWidget> InitIgnoreKeyWords();
 	FText GetIgnoreKeyWordsText() const;
 	void SetIgnoreKeyWordsText(const FText& InNewText, ETextCommit::Type);
@@ -96,6 +100,8 @@ protected:
 	TWeakObjectPtr<UTexture> CachedTexture;
 
 	FName CachedTexturePackageName;
+
+	float MinDistance = 50.0f;
 
 	ECheckBoxState bCleanLevel = ECheckBoxState::Checked;
 

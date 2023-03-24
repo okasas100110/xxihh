@@ -5,6 +5,7 @@
 #include "PropertyCustomizationHelpers.h"
 #include "XXiHH.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Widgets/Input/SSpinBox.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -29,6 +30,13 @@ void SXXiHHWidget::Construct(const FArguments& InArgs)
 		.Padding(XXiHHMargin)
 		[
 			InitCleanLevelInput()
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(XXiHHMargin)
+		[
+			InitMinDistanceInput()
 		]
 
 		+ SVerticalBox::Slot()
@@ -114,6 +122,40 @@ TSharedRef<SWidget> SXXiHHWidget::InitCleanLevelInput()
 		];
 }
 
+TSharedRef<SWidget> SXXiHHWidget::InitMinDistanceInput()
+{
+	return
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.Padding(XXiHHMargin)
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString(TEXT("Min distance bewteen meshes:")))
+		]
+					
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.Padding(XXiHHMargin)
+		[
+			SNew(SSpinBox<float>)
+			.MinValue(0.0f)
+			.MaxValue(1000.0f)
+			.Value(this, &SXXiHHWidget::OnGetMinDistance)
+			.OnValueChanged(this, &SXXiHHWidget::OnMinDistanceChanged)
+		];
+}
+
+float SXXiHHWidget::OnGetMinDistance() const
+{
+	return MinDistance;
+}
+
+void SXXiHHWidget::OnMinDistanceChanged(float NewMinDistance)
+{
+	MinDistance = NewMinDistance;
+}
+
 TSharedRef<SWidget> SXXiHHWidget::InitIgnoreKeyWords()
 {
 	return
@@ -133,7 +175,7 @@ TSharedRef<SWidget> SXXiHHWidget::InitIgnoreKeyWords()
 			SNew(SEditableTextBox)
 			.Text(this, &SXXiHHWidget::GetIgnoreKeyWordsText)
 			.OnTextCommitted(this, &SXXiHHWidget::SetIgnoreKeyWordsText)
-			.MinDesiredWidth(300.f)
+			.MinDesiredWidth(280.f)
 		];
 }
 
@@ -262,7 +304,7 @@ TSharedRef<SWidget> SXXiHHWidget::InitSpawnActor()
 		[
 			SNew(SBox)
 			.WidthOverride(150)
-			.HeightOverride(20)
+			.HeightOverride(30)
 			.VAlign(VAlign_Center)
 			[
 				SNew(SButton)
