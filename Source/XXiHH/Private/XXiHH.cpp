@@ -1,9 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "XXiHH.h"
+
 #include "XXiHHStyle.h"
 #include "XXiHHCommands.h"
-#include "Misc\MessageDialog.h"
 #include "ToolMenus.h"
 #include "Editor\WorkspaceMenuStructure\Public\WorkspaceMenuStructure.h"
 #include "Editor\WorkspaceMenuStructure\Public\WorkspaceMenuStructureModule.h"
@@ -34,7 +34,7 @@ void FXXiHHModule::StartupModule()
 		}))
 		.SetDisplayName(LOCTEXT("XXXiHHDisplayName", "XXiHH Mesh Display tool"))
 		.SetGroup(WorkspaceMenu::GetMenuStructure().GetLevelEditorCategory())
-		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Details"));
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
 	
 	PluginCommands = MakeShareable(new FUICommandList);
 
