@@ -32,7 +32,7 @@ void FXXiHHModule::StartupModule()
 					SNew(SXXiHHWidget)
 				];
 		}))
-		.SetDisplayName(LOCTEXT("XXXiHHDisplayName", "XXiHH Texture batch tool"))
+		.SetDisplayName(LOCTEXT("XXXiHHDisplayName", "XXiHH Mesh Display tool"))
 		.SetGroup(WorkspaceMenu::GetMenuStructure().GetLevelEditorCategory())
 		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Details"));
 	

@@ -222,12 +222,12 @@ FReply SXXiHHWidget::SpawnActorUseCachedTextureInLevel()
 			if (Index < StreamableRenderAssets.Num() - 1)
 			{
 				const FVector& NextExtent = StreamableRenderAssets[Index + 1].GetBoundingExtent();
-				Location.Y += FMath::Min(CurrExtent.Y, 50.0f);
-				Location.Y += FMath::Min(NextExtent.Y, 50.0f);
+				Location.Y += FMath::Max(CurrExtent.Y, 50.0f);
+				Location.Y += FMath::Max(NextExtent.Y, 50.0f);
 			}
 			else
 			{
-				Location.X += FMath::Min(CurrExtent.X, 50.0f);
+				Location.X += FMath::Max(CurrExtent.X, 50.0f);
 				Location.Y = 0.0f;
 			}
 			CachedOrigin.SetLocation(Location);
