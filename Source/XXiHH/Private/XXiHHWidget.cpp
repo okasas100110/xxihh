@@ -5,6 +5,7 @@
 #include "PropertyCustomizationHelpers.h"
 #include "XXiHH.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Misc/ScopedSlowTask.h"
 #include "Widgets/Input/SSpinBox.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -191,21 +192,37 @@ void SXXiHHWidget::SetIgnoreKeyWordsText(const FText& InNewText, ETextCommit::Ty
 
 FReply SXXiHHWidget::SpawnActorUseCachedTextureInLevel()
 {
+	int32 NumSpawnedActor = 0;
+	
 	if (!CachedTexturePackageName.IsNone())
 	{
 		TArray<FString> IgnoreKeyWordsArray;
 		IgnoreKeyWords.ParseIntoArray(IgnoreKeyWordsArray, TEXT(","));
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+		
 		TArray<FName> ReferenceMats;
 		AssetRegistryModule.Get().GetReferencers(CachedTexturePackageName, ReferenceMats);
+		
 		TArray<UStaticMesh*> StaticMeshes;
 		TArray<USkeletalMesh*> SkeletalMeshes;
+		
+		FScopedSlowTask MatSlowTask(ReferenceMats.Num(), FText::FromString(TEXT("Find material Referencers...")));
+		MatSlowTask.MakeDialog();
+		
 		for (const auto& ReferenceMat : ReferenceMats)
 		{
+			MatSlowTask.EnterProgressFrame(1.0f, FText::FromName(ReferenceMat));
+			
 			TArray<FName> ReferenceMeshes;
 			AssetRegistryModule.Get().GetReferencers(ReferenceMat, ReferenceMeshes);
+			
+			FScopedSlowTask MeshSlowTask(ReferenceMeshes.Num(), FText::FromString(TEXT("Find mesh Referencers...")));
+			MeshSlowTask.MakeDialog();
+			
 			for (const auto& ReferenceMesh : ReferenceMeshes)
 			{
+				MeshSlowTask.EnterProgressFrame(1.0f, FText::FromName(ReferenceMesh));
+				
 				FString MeshPackageName = ReferenceMesh.ToString();
 				if (IsIgnoreMeshByName(IgnoreKeyWordsArray, MeshPackageName))
 				{
@@ -222,6 +239,7 @@ FReply SXXiHHWidget::SpawnActorUseCachedTextureInLevel()
 				}
 			}
 		}
+		
 		TArray<FXXiHHStreamableRenderAsset> StreamableRenderAssets;
 		for (const auto& StaticMesh : StaticMeshes)
 		{
@@ -232,6 +250,7 @@ FReply SXXiHHWidget::SpawnActorUseCachedTextureInLevel()
 			StreamableRenderAssets.Add(FXXiHHStreamableRenderAsset(SkeletalMesh));
 		}
 		StreamableRenderAssets.Sort();
+		
 		if (GetIsCleanLevel() == ECheckBoxState::Checked)
 		{
 			for (const auto& CachedActor : CachedActors)
@@ -254,11 +273,20 @@ FReply SXXiHHWidget::SpawnActorUseCachedTextureInLevel()
 			}
 			CachedOrigin.SetLocation(Location);
 		}
+		
+		FScopedSlowTask SpawnSlowTask(StreamableRenderAssets.Num(), FText::FromString(TEXT("Spawn Actors...")));
+		SpawnSlowTask.MakeDialog();
+		
 		for (int32 Index = 0; Index < StreamableRenderAssets.Num(); ++ Index)
 		{
-			const FXXiHHStreamableRenderAsset& StreamableRenderAsset = StreamableRenderAssets[Index]; 
+			const FXXiHHStreamableRenderAsset& StreamableRenderAsset = StreamableRenderAssets[Index];
+			
+			SpawnSlowTask.EnterProgressFrame(1.0f, FText::FromString(StreamableRenderAsset.StreamableRenderAsset->GetName()));
+			
 			AActor* Actor = StreamableRenderAsset.SpawnActorByTransform(CachedOrigin);
+			NumSpawnedActor ++;
 			CachedActors.Add(Actor);
+			
 			const FVector& CurrExtent = StreamableRenderAsset.GetBoundingExtent();
 			FVector Location = CachedOrigin.GetLocation();
 			if (Index < StreamableRenderAssets.Num() - 1)
@@ -275,6 +303,12 @@ FReply SXXiHHWidget::SpawnActorUseCachedTextureInLevel()
 			CachedOrigin.SetLocation(Location);
 		}
 	}
+
+	FMessageDialog::Open(EAppMsgType::Ok,
+		NumSpawnedActor > 0 ?
+		FText::Format(FTextFormat::FromString("{0} StaticMeshActors/SkeletalMeshActors spawned!"), NumSpawnedActor) :
+		FText::FromString("No mesh referencer found!"));
+	
 	return FReply::Handled();
 }
 
