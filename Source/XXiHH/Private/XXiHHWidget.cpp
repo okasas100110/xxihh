@@ -165,11 +165,6 @@ FReply SXXiHHWidget::SpawnActorUseCachedTextureInLevel()
 			for (const auto& ReferenceMesh : ReferenceMeshes)
 			{
 				FString MeshPackageName = ReferenceMesh.ToString();
-				// TODO : Hard Code
-				if (!MeshPackageName.Contains("/ArtWork"))
-				{
-					continue;
-				}
 				if (IsIgnoreMeshByName(IgnoreKeyWordsArray, MeshPackageName))
 				{
 					continue;
