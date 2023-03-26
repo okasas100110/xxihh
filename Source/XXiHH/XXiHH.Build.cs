@@ -46,6 +46,7 @@ public class XXiHH : ModuleRules
 				"EditorStyle",
 				"WorkspaceMenuStructure",
 				"AssetRegistry",
+				"EditorSubsystem",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
