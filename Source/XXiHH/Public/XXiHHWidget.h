@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "XXiHHEditorSubsystem.h"
 #include "Animation/SkeletalMeshActor.h"
 #include "Engine/StaticMeshActor.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
@@ -79,8 +80,8 @@ public:
 	void OnTextureChanged	(const FAssetData& InAssetData);
 
 	TSharedRef<SWidget> InitCleanLevelInput();
-	ECheckBoxState GetIsCleanLevel() const { return bCleanLevel; }
-	void SetIsCleanLevel(ECheckBoxState NewState) { bCleanLevel = NewState; }
+	ECheckBoxState GetIsCleanLevel() const;
+	void SetIsCleanLevel(ECheckBoxState NewState);
 
 	TSharedRef<SWidget> InitMinDistanceInput();
 	float OnGetMinDistance() const;
@@ -96,18 +97,9 @@ public:
 
 	bool IsIgnoreMeshByName (const TArray<FString>& IgnoreKeyWords, const FString& PackageName) const;
 
+	UXXiHHEditorSubsystem* GetXXiHHEditorSubsystem() const;
+
 protected:
-	TWeakObjectPtr<UTexture> CachedTexture;
-
-	FName CachedTexturePackageName;
-
-	float MinDistance = 50.0f;
-
-	ECheckBoxState bCleanLevel = ECheckBoxState::Checked;
-
-	FString IgnoreKeyWords;
-
-	TArray<TWeakObjectPtr<AActor>> CachedActors;
 
 	FTransform CachedOrigin;
 };

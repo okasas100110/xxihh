@@ -84,9 +84,9 @@ TSharedRef<SWidget> SXXiHHWidget::InitTextureInput()
 
 FString SXXiHHWidget::GetTexturePath() const
 {
-	if (CachedTexture.IsValid())
+	if (GetXXiHHEditorSubsystem()->GetCachedTexture().IsValid())
 	{
-		const FSoftObjectPath Path(CachedTexture.Get());
+		const FSoftObjectPath Path(GetXXiHHEditorSubsystem()->GetCachedTexture().Get());
 		return Path.GetAssetPathString();
 	}
 	return TEXT("");
@@ -94,10 +94,11 @@ FString SXXiHHWidget::GetTexturePath() const
 
 void SXXiHHWidget::OnTextureChanged(const FAssetData& InAssetData)
 {
-	CachedTexture = Cast<UTexture>(InAssetData.GetAsset());
-	if (CachedTexture.IsValid())
+	const auto& CachedTexture = Cast<UTexture>(InAssetData.GetAsset());
+	if (CachedTexture)
 	{
-		CachedTexturePackageName = InAssetData.PackageName;
+		GetXXiHHEditorSubsystem()->SetCachedTexture(CachedTexture);
+		GetXXiHHEditorSubsystem()->SetCachedTexturePackageName(InAssetData.PackageName);
 	}
 }
 
@@ -121,6 +122,20 @@ TSharedRef<SWidget> SXXiHHWidget::InitCleanLevelInput()
 			.IsChecked(this, &SXXiHHWidget::GetIsCleanLevel)
 			.OnCheckStateChanged(this, &SXXiHHWidget::SetIsCleanLevel)
 		];
+}
+
+ECheckBoxState SXXiHHWidget::GetIsCleanLevel() const
+{
+	if (GetXXiHHEditorSubsystem()->IsCleanLevel())
+	{
+		return ECheckBoxState::Checked;
+	}
+	return ECheckBoxState::Unchecked;
+}
+
+void SXXiHHWidget::SetIsCleanLevel(ECheckBoxState NewState)
+{
+	GetXXiHHEditorSubsystem()->SetCleanLevel(NewState == ECheckBoxState::Checked);
 }
 
 TSharedRef<SWidget> SXXiHHWidget::InitMinDistanceInput()
@@ -149,12 +164,12 @@ TSharedRef<SWidget> SXXiHHWidget::InitMinDistanceInput()
 
 float SXXiHHWidget::OnGetMinDistance() const
 {
-	return MinDistance;
+	return GetXXiHHEditorSubsystem()->GetMinDistance();
 }
 
 void SXXiHHWidget::OnMinDistanceChanged(float NewMinDistance)
 {
-	MinDistance = NewMinDistance;
+	GetXXiHHEditorSubsystem()->SetMinDistance(NewMinDistance);
 }
 
 TSharedRef<SWidget> SXXiHHWidget::InitIgnoreKeyWords()
@@ -182,26 +197,28 @@ TSharedRef<SWidget> SXXiHHWidget::InitIgnoreKeyWords()
 
 FText SXXiHHWidget::GetIgnoreKeyWordsText() const
 {
-	return FText::FromString(IgnoreKeyWords);
+	return FText::FromString(GetXXiHHEditorSubsystem()->GetIgnoreKeyWords());
 }
 
 void SXXiHHWidget::SetIgnoreKeyWordsText(const FText& InNewText, ETextCommit::Type)
 {
-	IgnoreKeyWords = InNewText.ToString();
+	GetXXiHHEditorSubsystem()->SetIgnoreKeyWords(InNewText.ToString());
 }
 
 FReply SXXiHHWidget::SpawnActorUseCachedTextureInLevel()
 {
 	int32 NumSpawnedActor = 0;
+
+	UXXiHHEditorSubsystem* XXiHHEditorSubsystem = GetXXiHHEditorSubsystem();
 	
-	if (!CachedTexturePackageName.IsNone())
+	if (!XXiHHEditorSubsystem->GetCachedTexturePackageName().IsNone())
 	{
 		TArray<FString> IgnoreKeyWordsArray;
-		IgnoreKeyWords.ParseIntoArray(IgnoreKeyWordsArray, TEXT(","));
+		XXiHHEditorSubsystem->GetIgnoreKeyWords().ParseIntoArray(IgnoreKeyWordsArray, TEXT(","));
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 		
 		TArray<FName> ReferenceMats;
-		AssetRegistryModule.Get().GetReferencers(CachedTexturePackageName, ReferenceMats);
+		AssetRegistryModule.Get().GetReferencers(XXiHHEditorSubsystem->GetCachedTexturePackageName(), ReferenceMats);
 		
 		TArray<UStaticMesh*> StaticMeshes;
 		TArray<USkeletalMesh*> SkeletalMeshes;
@@ -251,27 +268,20 @@ FReply SXXiHHWidget::SpawnActorUseCachedTextureInLevel()
 		}
 		StreamableRenderAssets.Sort();
 		
-		if (GetIsCleanLevel() == ECheckBoxState::Checked)
+		if (XXiHHEditorSubsystem->IsCleanLevel())
 		{
-			for (const auto& CachedActor : CachedActors)
-			{
-				if (CachedActor.IsValid())
-				{
-					CachedActor->Destroy();
-				}
-			}
-			CachedActors.Empty();
-			CachedOrigin = FTransform();
+			XXiHHEditorSubsystem->CleanCachedActors();
+			XXiHHEditorSubsystem->SetCachedOrigin(FTransform());
 		}
 		else
 		{
-			FVector Location = CachedOrigin.GetLocation();
+			FVector Location = XXiHHEditorSubsystem->GetCachedOrigin().GetLocation();
 			if (StreamableRenderAssets.Num() > 0)
 			{
 				const FVector& LastExtent = StreamableRenderAssets[StreamableRenderAssets.Num() - 1].GetBoundingExtent();
 				Location.X += LastExtent.X;
 			}
-			CachedOrigin.SetLocation(Location);
+			XXiHHEditorSubsystem->SetCachedOrigin(FTransform(Location));
 		}
 		
 		FScopedSlowTask SpawnSlowTask(StreamableRenderAssets.Num(), FText::FromString(TEXT("Spawn Actors...")));
@@ -283,24 +293,24 @@ FReply SXXiHHWidget::SpawnActorUseCachedTextureInLevel()
 			
 			SpawnSlowTask.EnterProgressFrame(1.0f, FText::FromString(StreamableRenderAsset.StreamableRenderAsset->GetName()));
 			
-			AActor* Actor = StreamableRenderAsset.SpawnActorByTransform(CachedOrigin);
+			AActor* Actor = StreamableRenderAsset.SpawnActorByTransform(XXiHHEditorSubsystem->GetCachedOrigin());
 			NumSpawnedActor ++;
-			CachedActors.Add(Actor);
+			XXiHHEditorSubsystem->AddCachedActor(Actor);
 			
 			const FVector& CurrExtent = StreamableRenderAsset.GetBoundingExtent();
-			FVector Location = CachedOrigin.GetLocation();
+			FVector Location = XXiHHEditorSubsystem->GetCachedOrigin().GetLocation();
 			if (Index < StreamableRenderAssets.Num() - 1)
 			{
 				const FVector& NextExtent = StreamableRenderAssets[Index + 1].GetBoundingExtent();
-				Location.Y += FMath::Max(CurrExtent.Y, MinDistance);
-				Location.Y += FMath::Max(NextExtent.Y, MinDistance);
+				Location.Y += FMath::Max(CurrExtent.Y, XXiHHEditorSubsystem->GetMinDistance());
+				Location.Y += FMath::Max(NextExtent.Y, XXiHHEditorSubsystem->GetMinDistance());
 			}
 			else
 			{
-				Location.X += FMath::Max(CurrExtent.X, MinDistance);
+				Location.X += FMath::Max(CurrExtent.X, XXiHHEditorSubsystem->GetMinDistance());
 				Location.Y = 0.0f;
 			}
-			CachedOrigin.SetLocation(Location);
+			XXiHHEditorSubsystem->SetCachedOrigin(FTransform(Location));
 		}
 	}
 
@@ -359,6 +369,11 @@ bool SXXiHHWidget::IsIgnoreMeshByName(const TArray<FString>& IgnoreKeyWordsArray
 		}
 	}
 	return false;
+}
+
+UXXiHHEditorSubsystem* SXXiHHWidget::GetXXiHHEditorSubsystem() const
+{
+	return GEditor->GetEditorSubsystem<UXXiHHEditorSubsystem>();
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
