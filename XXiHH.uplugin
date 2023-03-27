@@ -8,16 +8,19 @@
 	"CreatedBy": "XX",
 	"CreatedByURL": "",
 	"DocsURL": "",
-	"MarketplaceURL": "",
+	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/ca5c6173166c426daaebddea53255539",
 	"SupportURL": "",
-	"EngineVersion": "4.27.0",
+	"EngineVersion": "4.27.2",
 	"CanContainContent": false,
 	"Installed": true,
 	"Modules": [
 		{
 			"Name": "XXiHH",
 			"Type": "Editor",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
 		}
 	]
 }
